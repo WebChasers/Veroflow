@@ -1,0 +1,24 @@
+# Python
+backend/venv/
+backend/__pycache__/
+backend/pipeline/__pycache__/
+*.pyc
+
+# Node / Next.js
+veroflow-dashboard/node_modules/
+veroflow-dashboard/.next/
+
+# Generated/uploaded data — these are created at runtime, not source code
+backend/storage/apks/*
+backend/storage/screenshots/*
+backend/storage/chroma_data/*
+!backend/storage/apks/.gitkeep
+!backend/storage/screenshots/.gitkeep
+!backend/storage/chroma_data/.gitkeep
+
+# Environment secrets (if you ever add API keys)
+.env
+*.env.local
+
+# OS junk
+.DS_Store

@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+sqlalchemy
+psycopg2-binary
+appium-python-client
+ollama
+python-dotenv
+python-multipart
+chromadb
+open_clip_torch
+torch
+torchvision
