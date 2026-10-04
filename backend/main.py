@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File, Form
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
@@ -9,16 +9,18 @@ from pipeline.test_executor import run_full_test
 
 app = FastAPI()
 
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 os.makedirs("storage/apks", exist_ok=True)
 os.makedirs("storage/screenshots", exist_ok=True)
 os.makedirs("storage/chroma_data", exist_ok=True)
+os.makedirs("storage/runs", exist_ok=True)  # For storing screenshots and logs of test runs
 
 
 @app.get("/")
@@ -28,7 +30,7 @@ def home():
 
 @app.post("/upload-apk")
 async def upload_apk(file: UploadFile = File(...)):
-    save_path = f"storage/apks/{file.filename}"
+    save_path = os.path.abspath(f"storage/apks/{file.filename}")
     with open(save_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
     return {"message": "APK uploaded successfully", "path": save_path}
@@ -42,9 +44,12 @@ async def submit_test(instruction: str = Form(...)):
 
 @app.post("/run-test")
 async def run_test(apk_path: str = Form(...), instruction: str = Form(...)):
-    result = run_full_test(apk_path, instruction)
-    return result
+    try:
+        result = run_full_test(apk_path=apk_path, instruction=instruction)
+        return result 
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # Serves screenshot images so the Next.js dashboard can display them
-app.mount("/screenshots", StaticFiles(directory="storage/screenshots"), name="screenshots")
+app.mount("/runs", StaticFiles(directory="storage/runs"), name="runs")

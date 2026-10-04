@@ -1,6 +1,8 @@
 import ollama
 import re
 import json
+import time
+
 
 def generate_appium_code(parsed_actions: list, screenshot_path: str, screen_label: str = None):
     """
@@ -35,14 +37,27 @@ def generate_appium_code(parsed_actions: list, screenshot_path: str, screen_labe
     driver.find_element(AppiumBy.XPATH, "//android.widget.Button[@text='Login']").click()
     """
 
-    response = ollama.chat(
-        model='qwen2.5vl:3b',
-        messages=[{
-            'role': 'user',
-            'content': prompt,
-            'images': [image_bytes]
-        }]
-    )
+    response = None
+    last_error = None
+    for attempt in range(3):
+        try:
+            response = ollama.chat(
+                model='qwen2.5vl:3b',
+                messages=[{
+                    'role': 'user',
+                    'content': prompt,
+                    'images': [image_bytes]
+                }],
+                keep_alive='10m'
+            )
+            break
+        except Exception as e:
+            last_error = e
+            print(f"[test_generator] Ollama attempt {attempt + 1}/3 failed: {e}")
+            time.sleep(5)
+
+    if response is None:
+        raise last_error
 
     code = response['message']['content']
     code = re.sub(r'```python', '', code)
